@@ -1,0 +1,49 @@
+version: '3.5'
+
+volumes:
+  auth_service_db:
+  flower_db:
+
+services:
+  auth_service:
+    container_name: auth_service
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+      target: app
+    image: auth_service:latest
+    volumes:
+      - .:/app
+    ports:
+      - "127.0.0.1:5566:5000"
+    depends_on:
+      - auth_service_redis
+      - auth_service_db
+
+  auth_service_redis:
+    container_name: auth_service_redis
+    image: redis:6.0.9-alpine
+
+  auth_service_db:
+    container_name: auth_service_db
+    image: postgres:11.0-alpine
+    volumes:
+      - auth_service_db:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_USER: joe
+      POSTGRES_PASSWORD: 19921119
+      POSTGRES_DB: postgres
+
+  auth_service_management:
+    container_name: auth_service_management
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: joe@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: root
+      PGADMIN_LISTEN_PORT: 8080
+    ports:
+      - "127.0.0.1:55688:8080"
+    depends_on:
+      - auth_service_db
